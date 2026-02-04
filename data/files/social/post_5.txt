@@ -1,0 +1,5 @@
+Durant mon cours de Data Visualization ce premier semestre au Presbyterian College, South Carolina, j'ai eu pour projet de visualiser une hashtag#database à l'aide du logiciel Tableau. J’ai choisi de travailler sur une data qui m'est familière en explorant les données récoltées depuis 2020 sur ma boutique en ligne fcpxstudio.com.
+
+Voici un slide de mon rapport, représentant la répartition et l'évolution des ventes à l'échelle de la planète, ainsi que les principales caractéristiques de chaque pays.
+
+En plus d'avoir développé de nouvelles compétences et appris à utiliser un logiciel professionnel comme Tableau, ce projet m'a permis de mieux comprendre le comportement de mes clients à travers le monde et d'éclairer les opportunités d'amélioration de la boutique.

@@ -1,5 +1,0 @@
-
-
-
-class Document:
-    pass
