@@ -1,4 +1,4 @@
-from typing import List, Literal
+from typing import Literal
 from pydantic import BaseModel
 
 
@@ -8,5 +8,5 @@ class Message(BaseModel):
     content: str
 
 class ChatRequest(BaseModel):
-    conversation: List[Message]
+    session_id: str
     query: str

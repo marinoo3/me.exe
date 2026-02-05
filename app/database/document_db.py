@@ -3,7 +3,7 @@ import numpy as np
 
 from app.models import Document, Chunk
 
-import sqlite3
+import sqlean as sqlite3
 import sqlite_vec
 
 
@@ -68,16 +68,18 @@ class DocumentDB:
         with conn:
             conn.row_factory = sqlite3.Row
 
-            query = """
+            query = f"""
             SELECT
                 c.document_id,
+                c.content,
+                c.emb_384d,
                 vec_distance_cosine(c.emb_384d, vec_f32(?)) AS query_distance,
                 d.name as source_name,
                 d.category as source_category
             FROM Chunk AS c
             JOIN Document AS d ON c.document_id = d.id
             ORDER BY query_distance
-            LIMIT 5
+            LIMIT {k}
             """
 
             rows = conn.execute(query, (embedding_blob,))

@@ -7,6 +7,7 @@ from app.services import RagService
 
 
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # --- startup logic ---
@@ -33,4 +34,4 @@ async def ping():
 
 
 # Include routers
-app.include_router(api.router, prefix="/api", tags=["api"])
+app.include_router(api.router)
