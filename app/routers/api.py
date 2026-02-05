@@ -28,8 +28,3 @@ async def send(body: ChatRequest, request: Request):
     )
     # Send response
     return response
-
-
-@router.get("/test")
-def test():
-    return "Hello world"
