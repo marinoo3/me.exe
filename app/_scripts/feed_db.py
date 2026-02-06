@@ -47,14 +47,14 @@ def parse_content(path: str) -> str:
         case 'pdf':
             return ParsePDF(path)
         case 'md':
-            return ParseMD(path)
+            return ParseMD.from_path(path)
         case _:
             raise ValueError(f"Impossible to parse '{ext}' files ({path})")
 
 
 
 if __name__ == '__main__':
-    document_db = DocumentDB()
+    document_db = db
     vectorizer = Vectorizer()
 
     with document_db.connect() as conn:

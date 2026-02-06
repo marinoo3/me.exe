@@ -1,9 +1,11 @@
 from typing import Optional
 from mistralai import Mistral
+from mistralai.models import UserMessage, SystemMessage, Messages
 import uuid
 
+from app.parser import ParseMD
 from app.exceptions import MissingAPIKeyError
-from app.models import Chunk, Message
+from app.models import Chunk
 from app.config import settings
 
 
@@ -21,7 +23,7 @@ class LLMSession:
     id: str
     temperature = .5
     max_tokens = 5000
-    messages = []
+    messages: list[Messages] = []
 
     def __init__(self, model: str = "mistral-medium-latest"):
         """
@@ -41,9 +43,7 @@ class LLMSession:
 
         self._client = None
         self.model_name = model
-        self.messages.append(
-            Message(role="system", content=self.system_prompt).model_dump()
-        )
+        self.__init_messages()
 
     @property
     def client(self):
@@ -52,6 +52,14 @@ class LLMSession:
             self._client = Mistral(api_key=self.api_key)
 
         return self._client
+    
+    def __init_messages(self) -> None:
+        """
+        Create (or erase) the list of message with the initial system prompt
+        """
+        self.messages = [
+            SystemMessage(content=self.system_prompt)
+        ]
     
     def build_rag_context(self, chunks: list[Chunk]) -> str:
         """
@@ -69,7 +77,6 @@ class LLMSession:
             [...]
             ```
         """
-
         context = []
         for chunk in chunks:
             context.append(
@@ -78,7 +85,6 @@ class LLMSession:
             )
         
         return "\n\n".join(context)
-
     
     def chat(
         self,
@@ -96,16 +102,15 @@ class LLMSession:
         Returns:
             LLMResponse with content and usage stats
         """
-
         # Add RAG context if provided
         if rag_context:
             self.messages.append(
-                Message(role="system", content=rag_context).model_dump()
+                SystemMessage(content=rag_context)
             )
 
         # Add new user message
         self.messages.append(
-            Message(role="user", content=message).model_dump()
+            UserMessage(content=message)
         )
 
         response = self.client.chat.complete(
@@ -118,16 +123,30 @@ class LLMSession:
         if not response.choices:
             raise ValueError("Invalid response from Mistral API")
         
-        print(self.messages)
+        # Add LLM response to conversation
+        self.messages.append(
+            response.choices[0].message
+        )
+        
+        # Parse Markdown to text and remove emojis
+        text_response = ParseMD.from_string(
+            str(response.choices[0].message.content),
+            remove_emojis=True
+        )
 
-        return response.choices[0].message.content #type: ignore
+        return text_response
+    
+    def clear_messages(self) -> None:
+        """
+        Reset the message history
+        """
+        self.__init_messages()
         
 
 class LLMHandler:
     """
     Manage LLMHandler sessions
     """
-
     sessions: list[LLMSession] = []
 
     def get_session(self, id: str) -> LLMSession:
@@ -137,7 +156,6 @@ class LLMHandler:
         Args:
             id (int): session uuid
         """
-
         for session in self.sessions:
             if session.id == id:
                 return session
@@ -151,7 +169,16 @@ class LLMHandler:
         Returns:
             LLMHandler: The LLMSession instance
         """
-
         session = LLMSession()
         self.sessions.append(session)
         return session
+    
+    def clear_session(self, id: str) -> None:
+        """
+        Clear a session conversation history
+
+        Args:
+            session_id (str): ID of the session to clear
+        """
+        session = self.get_session(id)
+        session.clear_messages()

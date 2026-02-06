@@ -10,3 +10,6 @@ class Message(BaseModel):
 class ChatRequest(BaseModel):
     session_id: str
     query: str
+
+class SessionRequest(BaseModel):
+    session_id: str

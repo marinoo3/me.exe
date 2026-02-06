@@ -1,5 +1,6 @@
 from markdown import Markdown
 from io import StringIO
+import emoji
 
 
 
@@ -19,21 +20,59 @@ Markdown.output_formats["plain"] = unmark_element #type: ignore
 
 
 class ParseMD:
-    """Parse text from PDF file"""
+    """Parse text from Markdown"""
 
-    def __new__(cls, file: str) -> str:
+    @staticmethod
+    def __create_md_parser() -> Markdown:
         """
+        Create a MD parser
+
+        Returns:
+            Markdown: MD parser
+        """
+        md = Markdown(output_format="plain") #type: ignore
+        md.stripTopLevelTags = False
+        return md
+    
+    @staticmethod
+    def __remove_emojis(text: str) -> str:
+        return emoji.replace_emoji(text, replace="")
+    
+    @staticmethod
+    def from_string(text: str, remove_emojis=False) -> str:
+        """
+        Parse text from text string
+        
+        Args:
+            text (str): MD formatted string to parse
+
+        Returns:
+            str: Extracted text string
+        """
+        md = ParseMD.__create_md_parser()
+        content = md.convert(text)
+
+        if remove_emojis:
+            content = ParseMD.__remove_emojis(content)
+
+        return content
+    
+    @staticmethod
+    def from_path(file_path: str, remove_emojis=False) -> str:
+        """
+        Parse text from .md file
+
         Args:
             file (str): File path to parse
 
         Returns:
             str: Extracted text string
         """
-        md = Markdown(output_format="plain")
-        md.stripTopLevelTags = False
-        return cls.__parse_from_path(md, file)
-    
-    @staticmethod
-    def __parse_from_path(md: Markdown, file_path: str):
+        md = ParseMD.__create_md_parser()
         with open(file_path) as doc:
-            return md.convert(doc.read())
+            content = md.convert(doc.read())
+
+            if remove_emojis:
+                content = ParseMD.__remove_emojis(content)
+
+            return content
