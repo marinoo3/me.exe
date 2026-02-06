@@ -1,3 +1,4 @@
 .env
+.DS_Store
 me-env/
-data/files/*
+data/files/**

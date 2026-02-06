@@ -1,1 +1,0 @@
-Ma première application a atteint aujourd'hui les 5 000 $ de ventes avec près de 10 000 utilisateurs. Développée en 2020, l'application permet aux utilisateurs de Final Cut Pro d'utiliser leurs plugins/extensions sur des anciennes versions du logiciel.
