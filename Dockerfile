@@ -7,14 +7,14 @@ RUN useradd -m -u 1000 user
 USER user
 ENV PATH="/home/user/.local/bin:$PATH"
 
-WORKDIR /app
+WORKDIR /
 
 COPY --chown=user ./requirements.txt requirements.txt
-RUN pip install --no-cache-dir --upgrade -r requirements.txt
+RUN pip install --upgrade -r requirements.txt
+# --no-cache-dir
 
-COPY --chown=user . /app
+COPY --chown=user . .
 
 EXPOSE 7860
 
-CMD ["uvicorn", "--port", "7860", "app.main:app"]
-
+CMD ["uvicorn", "--host", "0.0.0.0", "--port", "7860", "app.main:app"]
