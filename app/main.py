@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
-from .routers import api
+from .routers import api, route
 from app.services import RagService
 
 
@@ -36,11 +36,6 @@ app.add_middleware(
 )
 
 
-@app.get("/ping", tags=["ping"])
-async def ping():
-    """Simple health check endpoint."""
-    return {"status": "ok"}
-
-
 # Include routers
 app.include_router(api.router)
+app.include_router(route.router)

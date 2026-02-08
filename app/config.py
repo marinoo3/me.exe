@@ -17,7 +17,7 @@ class Settings(BaseSettings):
 
     APP_NAME: str = "me.exe"
     APP_DESCRIPTION: str = "Personal chatbot API"
-    APP_VERSION: str = "0.1.0"
+    APP_VERSION: str = "0.1.1"
     ENVIRONMENT: str = Field(default="production", validation_alias="ENV")
 
     MISTRAL_API_KEY: SecretStr = Field(..., alias="mistral_api_key")

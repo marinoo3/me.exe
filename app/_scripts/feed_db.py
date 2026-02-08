@@ -17,7 +17,6 @@ def load_documents(path: str) -> Generator:
     Yield:
         tuple[Document, str]: Tuple of document and its path
     """
-
     for category in os.listdir(path):
         category_path = os.path.join(path, category)
         for _, _, files in os.walk(category_path):
