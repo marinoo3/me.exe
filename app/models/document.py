@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
 
@@ -6,3 +6,10 @@ class Document(BaseModel):
     id: Optional[int] = None
     name: str
     category: str
+
+    model_config = ConfigDict(frozen=True)
+
+    def __hash__(self) -> int:
+        # Hash the data that defines equality.
+        # To make the objects hashable
+        return hash((self.id, self.name, self.category))

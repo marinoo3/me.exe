@@ -21,7 +21,7 @@ class VectorStore:
         Returns:
             list[Chunk]: List of document chunk
         """
-
+        
         embeddings = self.vectorizer.generate_embeddings(query)
 
         with self.document_db.connect() as conn:

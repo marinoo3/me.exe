@@ -66,11 +66,12 @@ async def send(body: ChatRequest, request: Request):
         }
     """
     rag_service: RagService = request.app.state.rag_service
-    response = rag_service.make_query(
+    response, sources = rag_service.make_query(
         body.query,
         session_id=body.session_id
     )
 
     return {
-        'response': response
+        'response': response,
+        'sources': [document.model_dump() for document in sources]
     }

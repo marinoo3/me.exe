@@ -3,7 +3,7 @@ import numpy as np
 
 from app.models import Document, Chunk
 
-import sqlite3
+import sqlean as sqlite3
 import sqlite_vec
 
 
@@ -78,6 +78,7 @@ class DocumentDB:
                 d.category as source_category
             FROM Chunk AS c
             JOIN Document AS d ON c.document_id = d.id
+            WHERE query_distance <= 0.65
             ORDER BY query_distance
             LIMIT {k}
             """

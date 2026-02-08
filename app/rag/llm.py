@@ -25,18 +25,18 @@ class LLMSession:
     max_tokens = 5000
     messages: list[Messages] = []
 
-    def __init__(self, model: str = "mistral-medium-latest"):
+    def __init__(self, model: str = "mistral-small-latest"):
         """
         Initialize the LLM handler.
 
         Args:
-            model: Model key from MODELS dict.
+            model: Mistral model name. Default to 'mistral-small-latest'
         """
         self.id = str(uuid.uuid4())
-        self.api_key = settings.MISTRAL_API_KEY.get_secret_value()
+        self._api_key = settings.MISTRAL_API_KEY.get_secret_value()
         self.system_prompt = settings.SYSTEM_PROMPT
 
-        if not self.api_key:
+        if not self._api_key:
             raise MissingAPIKeyError(
                 "MISTRAL_API_KEY not found in environment variables"
             )
@@ -49,7 +49,7 @@ class LLMSession:
     def client(self):
         """Lazy initialization of Mistral client."""
         if self._client is None:
-            self._client = Mistral(api_key=self.api_key)
+            self._client = Mistral(api_key=self._api_key)
 
         return self._client
     
