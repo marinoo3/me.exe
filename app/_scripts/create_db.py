@@ -1,4 +1,4 @@
-import sqlite3
+import sqlean as sqlite3
 import sqlite_vec
 
 connection = sqlite3.connect("data/db/document.db")
