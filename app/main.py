@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .routers import api, route
-from app.services import RagService
+from app.services import RagService, DocumentService
 
 
 
@@ -13,11 +13,13 @@ from app.services import RagService
 async def lifespan(app: FastAPI):
     # --- startup logic ---
     app.state.rag_service = RagService()
+    app.state.document_service = DocumentService()
 
     yield
 
     # --- shutdown logic ---
     del app.state.rag_service
+    del app.state.document_service
 
 
 app = FastAPI(
@@ -37,5 +39,5 @@ app.add_middleware(
 
 
 # Include routers
-app.include_router(api.router)
 app.include_router(route.router)
+app.include_router(api.router)

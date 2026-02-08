@@ -13,7 +13,8 @@ schema_statements = [
     CREATE TABLE IF NOT EXISTS Document (
         id          INTEGER PRIMARY KEY,
         name        TEXT,
-        category    TEXT
+        category    TEXT,
+        url         TEXT
     );
     """,
     """

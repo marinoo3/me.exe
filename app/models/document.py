@@ -6,6 +6,7 @@ class Document(BaseModel):
     id: Optional[int] = None
     name: str
     category: str
+    url: Optional[str] = None
 
     model_config = ConfigDict(frozen=True)
 

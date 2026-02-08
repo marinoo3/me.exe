@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Query
 
-from app.services import RagService
+from app.services import RagService, DocumentService
 from app.models import ChatRequest, SessionRequest
 
 
@@ -30,7 +30,7 @@ async def create_session(request: Request):
         'session_id': session.id
     }
 
-@router.post("/clear_session", summary="Clear a chatbot session conversation")
+@router.post("/clear_session", summary="Clear a chatbot conversation session")
 async def clear_session(body: SessionRequest, request: Request):
     """
     Clear a session conversation history
@@ -51,7 +51,7 @@ async def clear_session(body: SessionRequest, request: Request):
         'success': True
     }
 
-@router.post("/send", summary="Query the chatbot")
+@router.post("/send", summary="Query the chatbot with RAG")
 async def send(body: ChatRequest, request: Request):
     """
     Send a message to LLM with RAG context
@@ -73,5 +73,28 @@ async def send(body: ChatRequest, request: Request):
 
     return {
         'response': response,
-        'sources': [document.model_dump() for document in sources]
+        'sources': [document.id for document in sources]
+    }
+
+@router.get("/get_documents", summary="Retrieve RAG documents by IDs")
+async def get_documents(request: Request, ids:list[int] = Query(...)):
+    """
+    Retrieve a list of RAG documents from IDs
+
+    Args:
+        ids (list[int]): List of document IDs
+        request (Request): Default request argument
+
+    Returns:
+        json: {
+            documents (list[dict]): Document objects
+        }
+    """
+    document_service: DocumentService = request.app.state.document_service
+    documents = document_service.get_by_ids(ids)
+
+    return {
+        'documents': [
+            doc.model_dump() for doc in documents
+        ]
     }

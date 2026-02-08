@@ -44,6 +44,35 @@ class DocumentDB:
         return conn
     
     # --------- GET methods
+
+    def get_document(self, id: int, conn: sqlite3.Connection) -> Document|None:
+        """
+        Retrieve a document from its ID
+
+        Args:
+            id (int): Document ID
+            conn (sqlite3.Connection): DB connection
+
+        Returns:
+            Document|None: The retrived document object, or None if not found.
+        """
+        with conn:
+            conn.row_factory = sqlite3.Row
+
+            row = conn.execute(
+                "SELECT * from Document WHERE id = ?",
+                (id,)
+            ).fetchone()
+
+            if not row:
+                return None
+            
+            return Document(
+                id=row['id'],
+                name=row['name'],
+                category=row['category'],
+                url=row['url']
+            )
     
     def get_k_nearest(
                 self,
