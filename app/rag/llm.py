@@ -2,10 +2,11 @@ from typing import Optional
 from mistralai import Mistral
 from mistralai.models import UserMessage, SystemMessage, Messages
 import uuid
+import json
 
 from app.parser import ParseMD
 from app.exceptions import MissingAPIKeyError
-from app.models import Chunk
+from app.models import Chunk, Context
 from app.config import settings
 
 
@@ -19,11 +20,12 @@ class LLMSession:
     Manages model selection, prompt templates and conversation history.
     """
 
-    model_name: str
     id: str
+    model_name: str
     temperature = .5
     max_tokens = 5000
     messages: list[Messages] = []
+    contexts: dict[str, Context] = {}
 
     def __init__(self, model: str = "mistral-small-latest"):
         """
@@ -61,35 +63,47 @@ class LLMSession:
             SystemMessage(content=self.system_prompt)
         ]
     
-    def build_rag_context(self, chunks: list[Chunk]) -> str:
+    def build_context(self, chunks: list[Chunk], store=True) -> Context:
         """
-        Create a RAG context / prompt from a list of chunk
+        Create a RAG context / prompt from a list of chunk. Store the context chunks in history
 
         Args:
             chunks (list[Chunk]): The chunks to build a context from
+            store (bool, optional): To store or not the chunks in history. Default to True
 
         Returns:
-            str: Formatted RAG context:
-            ```md
-            > name (category)
-            content
-
-            [...]
-            ```
+            str: Formatted RAG context
+            str: context UUID (if stored)
         """
-        context = []
-        for chunk in chunks:
-            context.append(
-                f"> {chunk.source_name} ({chunk.source_categorie})" +
-                f"\n...{chunk.content}..."
-            )
+        context = Context(
+            chunks=chunks
+        )
+
+        if store:
+            self.contexts[context.id] = context
         
-        return "\n\n".join(context)
+        return context
     
-    def chat(
+    def get_context(self, id: str) -> Context:
+        """
+        Retrieve a context from its UUID
+
+        Args:
+            id (str): Context UUID to retrive
+
+        Returns:
+            Context: Context object
+        """
+        context = self.contexts.get(id)
+        if not context:
+            raise IndexError(f"No context found with uuid '{id}'")
+        
+        return context
+
+    def send_message(
         self,
         message: str,
-        rag_context: Optional[str] = None
+        context: Optional[Context] = None
     ) -> str:
         """
         Generate a response in a conversation context with history.
@@ -97,15 +111,15 @@ class LLMSession:
         Args:
             message (str): The user message.
             history (list[Message], optional): List of previous messages [{"role": "user"|"assistant", "content": "..."}].
-            rag_context (str, optional): Optional RAG context prompt.
+            context (str, optional): Optional RAG context prompt.
 
         Returns:
             LLMResponse with content and usage stats
         """
         # Add RAG context if provided
-        if rag_context:
+        if context:
             self.messages.append(
-                SystemMessage(content=rag_context)
+                SystemMessage(content=context.context)
             )
 
         # Add new user message
@@ -136,6 +150,27 @@ class LLMSession:
 
         return text_response
     
+    def dump_messages(self, format='str') -> str:
+        """
+        Format message history to a string or json for export
+
+        Returns:
+            str: Dumped messages
+        """
+        match format:
+            case 'str':
+                dumped = [
+                    f"{message.role}\n{message.content}" for message in self.messages
+                ]
+                return '\n------------\n'.join(dumped)
+            case 'json':
+                dumped = [
+                    message.model_dump() for message in self.messages
+                ]
+                return json.dumps(dumped, indent=3)
+            case _:
+                raise ValueError(f"Invalid format parameter '{format}', expected 'str' or 'json'")
+
     def clear_messages(self) -> None:
         """
         Reset the message history
@@ -147,20 +182,21 @@ class LLMHandler:
     """
     Manage LLMHandler sessions
     """
-    sessions: list[LLMSession] = []
+
+    sessions: dict[str, LLMSession] = {}
 
     def get_session(self, id: str) -> LLMSession:
         """
         Retrieve a LLMSession from its uuid
 
         Args:
-            id (int): session uuid
+            id (int): Session uuid
         """
-        for session in self.sessions:
-            if session.id == id:
-                return session
-            
-        raise IndexError(f"No session found with uuid {uuid}")
+        session = self.sessions.get(id)
+        if not session:
+            raise IndexError(f"No session found with uuid {id}")
+        
+        return session
     
     def create_session(self) -> LLMSession:
         """
@@ -170,15 +206,15 @@ class LLMHandler:
             LLMHandler: The LLMSession instance
         """
         session = LLMSession()
-        self.sessions.append(session)
+        self.sessions[session.id] = session
         return session
     
-    def clear_session(self, id: str) -> None:
+    def delete_session(self, id: str) -> None:
         """
-        Clear a session conversation history
+        Delete a LLMSession instance
 
         Args:
-            session_id (str): ID of the session to clear
+            id (int): Session uuid
         """
         session = self.get_session(id)
-        session.clear_messages()
+        self.sessions.pop(session.id)

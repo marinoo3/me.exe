@@ -3,12 +3,6 @@ Vectorizer Module.
 
 This module provides text embedding generation and chunking functionality
 using sentence-transformers models.
-
-Example:
-    >>> from app.services.embedding_service import Vectorizer
-    >>> service = Vectorizer()
-    >>> chunks = service.chunk_text("Long document text...")
-    >>> embeddings = service.generate_embeddings(chunks)
 """
 
 import os

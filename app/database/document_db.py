@@ -3,7 +3,7 @@ import numpy as np
 
 from app.models import Document, Chunk
 
-import sqlite3
+import sqlean as sqlite3
 import sqlite_vec
 
 
@@ -99,12 +99,14 @@ class DocumentDB:
 
             query = f"""
             SELECT
+                c.rowid,
                 c.document_id,
                 c.content,
                 c.emb_384d,
                 vec_distance_cosine(c.emb_384d, vec_f32(?)) AS query_distance,
                 d.name as source_name,
-                d.category as source_category
+                d.category as source_category,
+                d.url as source_url
             FROM Chunk AS c
             JOIN Document AS d ON c.document_id = d.id
             WHERE query_distance <= 0.65
@@ -116,11 +118,17 @@ class DocumentDB:
 
             chunks = [
                 Chunk(
+                    id=row['rowid'],
                     document_id=row["document_id"],
                     content=row["content"],
                     emb_384d=np.frombuffer(row["emb_384d"], dtype=np.float32).copy(),
-                    source_name=row["source_name"],
-                    source_categorie=row["source_category"]
+                    distance=row['query_distance'],
+                    source=Document(
+                        id=row["document_id"],
+                        name=row['source_name'],
+                        category=row['source_category'],
+                        url=row['source_url']
+                    )
                 )
                 for row in rows
             ]

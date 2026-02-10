@@ -1,6 +1,6 @@
 from app.rag import VectorStore, LLMHandler
 from app.exceptions import UnsafeRequestException
-from app.models import Document
+from app.models import Context
 
 
 
@@ -15,7 +15,7 @@ class RagService:
             self, 
             query: str, 
             session_id: str
-            ) -> tuple[str, set[Document]]:
+            ) -> tuple[str, Context|None]:
         """
         Process RAG, set conversation if provided and make a query to the LLM
 
@@ -25,32 +25,24 @@ class RagService:
 
         Returns:
             str: LLM response
-            set[Document]: Unique documents used for RAG
+            Context|None: Context object used for query
         """
-
         # Retrieve LLM session
         session = self.llm_handler.get_session(session_id)
 
         # Retrieve related document chunks (RAG)
         related_chunks = self.vector_store.search(query)
-        sources = {
-            Document(
-                id = chunk.document_id,
-                name = chunk.source_name or "",
-                category = chunk.source_categorie or ""
-            ) for chunk in related_chunks
-        }
 
         # Build RAG prompt from chunks
-        context = ""
+        context = None
         if related_chunks:
-            context = session.build_rag_context(related_chunks)
+            context = session.build_context(related_chunks)
 
         # Query LLM
-        response = session.chat(
+        response = session.send_message(
             query, 
-            rag_context=context
+            context=context
         )
 
-        return response, sources
+        return response, context
 
