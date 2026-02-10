@@ -3,7 +3,7 @@ import numpy as np
 
 from app.models import Document, Chunk
 
-import sqlean as sqlite3
+import sqlite3
 import sqlite_vec
 
 
