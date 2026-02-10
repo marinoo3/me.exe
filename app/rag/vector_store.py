@@ -1,4 +1,4 @@
-from app.rag import Vectorizer
+from app.rag import Vectorizer, Reranker
 from app.database import db
 from app.models import Chunk
 
@@ -7,9 +7,10 @@ class VectorStore:
     
     def __init__(self) -> None:
         self.vectorizer = Vectorizer()
+        self.reranker = Reranker()
         self.document_db = db
 
-    def search(self, query: str, k=5) -> list[Chunk]:
+    def search(self, query: str, k=10) -> list[Chunk]:
         """
         Search nearest documents from a query. Embed the query, search for the nearest chunks
         and return the chunks
@@ -31,4 +32,6 @@ class VectorStore:
                 conn=conn
             )
 
-            return chunks
+        reranked_chunks = self.reranker.rerank(query, chunks)
+
+        return reranked_chunks

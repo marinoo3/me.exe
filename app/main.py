@@ -18,7 +18,6 @@ async def lifespan(app: FastAPI):
 
     # --- shutdown logic ---
     del app.state.rag_service
-    del app.state.document_service
 
 
 app = FastAPI(

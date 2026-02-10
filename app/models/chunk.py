@@ -14,6 +14,7 @@ class Chunk(BaseModel):
     emb_384d: np.ndarray
 
     distance: Optional[float] = None
+    score: Optional[float] = None
     
     source: Optional[Document] = None
 
@@ -26,3 +27,8 @@ class Chunk(BaseModel):
     def serialize_distance(self, d: float, _info):
         # Round distance to 3 digits for json export
         return round(d, 3)
+    
+    @field_serializer("score")
+    def serialize_score(self, s: float, _info):
+        # Round distance to 2 digits for json export
+        return round(s, 2)
