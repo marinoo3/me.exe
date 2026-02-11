@@ -9,6 +9,7 @@ from app.models import Chunk
 class Context(BaseModel):
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    query: str
     chunks: list[Chunk]
 
     @computed_field

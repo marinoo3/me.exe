@@ -36,7 +36,7 @@ class RagService:
         # Build RAG prompt from chunks
         context = None
         if related_chunks:
-            context = session.build_context(related_chunks)
+            context = session.build_context(query, related_chunks)
 
         # Query LLM
         response = session.send_message(

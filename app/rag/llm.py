@@ -63,19 +63,20 @@ class LLMSession:
             SystemMessage(content=self.system_prompt)
         ]
     
-    def build_context(self, chunks: list[Chunk], store=True) -> Context:
+    def build_context(self, query: str, chunks: list[Chunk], store=True) -> Context:
         """
         Create a RAG context / prompt from a list of chunk. Store the context chunks in history
 
         Args:
             chunks (list[Chunk]): The chunks to build a context from
+            query (str): User message query
             store (bool, optional): To store or not the chunks in history. Default to True
 
         Returns:
-            str: Formatted RAG context
-            str: context UUID (if stored)
+            Context: Context object
         """
         context = Context(
+            query=query,
             chunks=chunks
         )
 
@@ -150,19 +151,22 @@ class LLMSession:
 
         return text_response
     
-    def dump_messages(self, format='str') -> str:
+    def dump_messages(self, format='txt') -> str:
         """
         Format message history to a string or json for export
+
+        Arguments:
+            format (str): Which format to use for export ('txt' or 'json')
 
         Returns:
             str: Dumped messages
         """
         match format:
-            case 'str':
+            case 'txt':
                 dumped = [
-                    f"{message.role}\n{message.content}" for message in self.messages
+                    f"------------ {message.role}\n{message.content}" for message in self.messages
                 ]
-                return '\n------------\n'.join(dumped)
+                return '\n\n'.join(dumped)
             case 'json':
                 dumped = [
                     message.model_dump() for message in self.messages
