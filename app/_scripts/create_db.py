@@ -1,4 +1,4 @@
-import sqlite3
+import sqlean as sqlite3
 import sqlite_vec
 
 connection = sqlite3.connect("data/db/document.db")
@@ -21,6 +21,7 @@ schema_statements = [
     CREATE VIRTUAL TABLE IF NOT EXISTS Chunk
     USING vec0(
         emb_384d        FLOAT[384],
+        emb_3d          FLOAT[3],
         content         TEXT,
         document_id     INTEGER
     );

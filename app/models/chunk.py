@@ -12,13 +12,14 @@ class Chunk(BaseModel):
     document_id: int
     content: str
     emb_384d: np.ndarray
+    emb_3d: np.ndarray
 
     distance: Optional[float] = None
     score: Optional[float] = None
     
     source: Optional[Document] = None
 
-    @field_serializer("emb_384d")
+    @field_serializer("emb_384d", "emb_3d")
     def serialize_embedding(self, v: np.ndarray, _info):
         # Serialize np array for json export
         return v.tolist()

@@ -1,9 +1,10 @@
 import os
 import numpy as np
 
+from app.config import settings
 from app.models import Document, Chunk
 
-import sqlite3
+import sqlean as sqlite3
 import sqlite_vec
 
 
@@ -13,7 +14,7 @@ class DocumentDB:
     path = 'db/document.db'
 
     def __init__(self) -> None:
-        root = os.environ.get('DATA_PATH', 'data/')
+        root = settings.DATA_PATH
         self.db_path = os.path.join(root, self.path)
 
     @staticmethod
@@ -45,34 +46,72 @@ class DocumentDB:
     
     # --------- GET methods
 
-    def get_document(self, id: int, conn: sqlite3.Connection) -> Document|None:
+    def get_document(self, conn: sqlite3.Connection, ids: list[int]|None = None) -> list[Document]:
         """
-        Retrieve a document from its ID
+        Retrieve documents by ID
 
         Args:
-            id (int): Document ID
+            id (list[int]): list of document IDs
             conn (sqlite3.Connection): DB connection
 
         Returns:
-            Document|None: The retrived document object, or None if not found.
+            list[Document]: Retrived document objects
         """
         with conn:
             conn.row_factory = sqlite3.Row
 
-            row = conn.execute(
-                "SELECT * from Document WHERE id = ?",
-                (id,)
-            ).fetchone()
+            sql_query = "SELECT * from Document"
+            params = []
 
-            if not row:
-                return None
+            if ids:
+                params = ids
+                placeholders = ",".join("?" for _ in ids)
+                sql_query += f" WHERE id IN ({placeholders})"
+
+            rows = conn.execute(sql_query, params).fetchall()
             
-            return Document(
-                id=row['id'],
-                name=row['name'],
-                category=row['category'],
-                url=row['url']
-            )
+            return [
+                Document(
+                    id=row['id'],
+                    name=row['name'],
+                    category=row['category'],
+                    url=row['url']
+                ) for row in rows
+            ]
+        
+    def get_chunks(self, conn: sqlite3.Connection, ids: list[int]|None = None) -> list[Chunk]:
+        """
+        Retrieve chunks by ID
+
+        Args:
+            ids (list[int], optional): Chunk IDs to retrive. Default to None
+            conn (sqlite3.Connection): DB connection
+
+        Returns:
+            list[Chunk]: Retrieved chunk objects
+        """
+        with conn:
+            conn.row_factory = sqlite3.Row
+
+            sql_query = "SELECT * from Chunk"
+            params = []
+
+            if ids:
+                params = ids
+                placeholders = ",".join("?" for _ in ids)
+                sql_query += f" WHERE id IN ({placeholders})"
+
+            rows = conn.execute(sql_query, params).fetchall()
+
+            return [
+                Chunk(
+                    id=row['rowid'],
+                    document_id=row['document_id'],
+                    content=row['content'],
+                    emb_384d=np.frombuffer(row["emb_384d"], dtype=np.float32).copy(),
+                    emb_3d=np.frombuffer(row["emb_3d"], dtype=np.float32).copy()
+                ) for row in rows
+            ]
     
     def get_k_nearest(
                 self,
@@ -103,6 +142,7 @@ class DocumentDB:
                 c.document_id,
                 c.content,
                 c.emb_384d,
+                c.emb_3d,
                 vec_distance_cosine(c.emb_384d, vec_f32(?)) AS query_distance,
                 d.name as source_name,
                 d.category as source_category,
@@ -122,6 +162,7 @@ class DocumentDB:
                     document_id=row["document_id"],
                     content=row["content"],
                     emb_384d=np.frombuffer(row["emb_384d"], dtype=np.float32).copy(),
+                    emb_3d=np.frombuffer(row["emb_3d"], dtype=np.float32).copy(),
                     distance=row['query_distance'],
                     source=Document(
                         id=row["document_id"],
@@ -176,10 +217,10 @@ class DocumentDB:
         with conn:
             cur = conn.execute(
                 """
-                INSERT INTO Chunk (emb_384d, content, document_id)
-                VALUES (?, ?, ?)
+                INSERT INTO Chunk (emb_384d, emb_3d, content, document_id)
+                VALUES (?, ?, ?, ?)
                 """,
-                (chunk.emb_384d, chunk.content, chunk.document_id)
+                (chunk.emb_384d, chunk.emb_3d, chunk.content, chunk.document_id)
             )
 
             if cur.lastrowid is None:

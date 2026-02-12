@@ -3,8 +3,10 @@ from typing import Generator
 
 from app.models import Document, Chunk
 from app.database import db
-from app.rag import Vectorizer
+from app.rag import Vectorizer, Reductor
 from app.parser import ParsePDF, ParseMD
+
+import numpy as np
 
 
 def load_documents(path: str) -> Generator:
@@ -55,8 +57,10 @@ def parse_content(path: str) -> str:
 if __name__ == '__main__':
     document_db = db
     vectorizer = Vectorizer()
+    reductor = Reductor()
 
     with document_db.connect() as conn:
+        chunks: list[Chunk] = []
         for document, path in load_documents('data/files'):
             print(path)
             # Create document in DB
@@ -64,12 +68,21 @@ if __name__ == '__main__':
             # Read and chunk its content
             document_content = parse_content(path)
             chunks_content = vectorizer.chunk_text(document_content)
-            # Vectorize and create the chunks in DB
+            # Vectorize and create the chunks in DB            
             for content in chunks_content:
                 emb_384d = vectorizer.generate_embeddings(content)
-                chunk = Chunk(
-                    document_id = doc_id,
-                    content = content,
-                    emb_384d = emb_384d
+                chunks.append(
+                    Chunk(
+                        document_id = doc_id,
+                        content = content,
+                        emb_384d = emb_384d,
+                        emb_3d=np.array([])
+                    )
                 )
-                document_db.add_chunk(chunk, conn=conn)
+        
+        emb_384ds = np.asarray([chunk.emb_384d for chunk in chunks])
+        emb_3ds = reductor.fit_transform(emb_384ds)
+
+        for chunk, emb_3d in zip(chunks, emb_3ds):
+            chunk.emb_3d = emb_3d
+            document_db.add_chunk(chunk, conn=conn)

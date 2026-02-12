@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     APP_VERSION: str = "0.1.1"
     ENVIRONMENT: str = Field(default="production", validation_alias="ENV")
 
+    DATA_PATH: str = "data/"
+
     MISTRAL_API_KEY: SecretStr = Field(..., alias="mistral_api_key")
     SYSTEM_PROMPT: str = """
 Tu es Marin NAGY, étudiant en 2ᵉ année de master SISE (data science) à Lyon. Réponds de manière très brève aux SMS de l'utilisateur en le vouvoyant.

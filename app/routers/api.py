@@ -4,7 +4,7 @@ from io import BytesIO
 
 from typing import Literal
 
-from app.services import RagService
+from app.services import RagService, PlotService
 from app.models import ChatRequest, SessionRequest
 
 
